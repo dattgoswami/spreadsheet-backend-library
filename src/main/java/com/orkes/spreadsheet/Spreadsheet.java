@@ -24,7 +24,6 @@ public class Spreadsheet {
     private final Map<String, String> formulas;
     private final Deque<Cell> history;
     private final Deque<Cell> future;
-    private final Set<String> currentEvaluation;
     private final Map<String, Set<String>> dependencies;
     private static final Logger logger = LoggerFactory.getLogger(Spreadsheet.class);
 
@@ -33,7 +32,6 @@ public class Spreadsheet {
         this.formulas = new HashMap<>();
         this.history = new ArrayDeque<>();
         this.future = new ArrayDeque<>();
-        this.currentEvaluation = new HashSet<>();
         this.dependencies = new HashMap<>();
     }
 
@@ -173,7 +171,7 @@ public class Spreadsheet {
                 throw new IllegalArgumentException("Formula does not exist");
             }
             try {
-                return evaluateExpression(formulas.get(cellId).substring(1));
+                return evaluateExpression(formulas.get(cellId).substring(1), cellId);
             } catch (IllegalArgumentException e) {
                 logger.error("Invalid formula in cell {}: {}", cellId, e.getMessage());
                 throw new IllegalArgumentException("Invalid formula in cell " + cellId + ": " + e.getMessage(), e);
@@ -196,14 +194,14 @@ public class Spreadsheet {
      * Evaluates a given mathematical expression.
      * The expression is first added to the current evaluations, then removed once the evaluation is done.
      * @param expression the expression to evaluate.
+     * @param currentCellId The cell ID where the expression is defined.
      * @return the result of the evaluation.
      * @throws IllegalArgumentException if the expression is invalid.
      */
-    private double evaluateExpression(String expression) {
+    private double evaluateExpression(String expression, String currentCellId) {
         try {
-            this.currentEvaluation.add(expression);
-            double result = prepareExpression(expression);
-            this.currentEvaluation.remove(expression);
+            double result = prepareExpression(expression, currentCellId);
+            logger.debug("Result of the expression {}: {}", expression, result);
             return result;
         } catch (NumberFormatException e) {
             logger.error("Invalid expression: Invalid number format", e);
@@ -218,27 +216,29 @@ public class Spreadsheet {
     }
 
     /**
-     * Prepares an expression for evaluation by pre-processing it, validating its syntax, and calculating its result.
+     * Prepares an expression for evaluation by pre-processing it, validating its syntax, replace cell IDs with values and then calculating its result.
      * @param expression the expression to prepare.
+     * @param currentCellId The cell ID where the expression is defined.
      * @return the result of the evaluation.
      */
-    private double prepareExpression(String expression) {
-        String processedExpression = preprocessExpression(expression);
+    private double prepareExpression(String expression, String currentCellId) {
+        String processedExpression = preprocessExpression(expression, currentCellId);
         validateExpressionSyntax(processedExpression);
         return calculateExpression(processedExpression);
     }
 
     /**
      * Pre-processes an expression by replacing cell IDs with their corresponding values.
-     * If a cell ID in the expression is also currently being evaluated, a circular reference is detected.
+     * Checks for circular dependencies.
      * @param expression the expression to pre-process.
-     * @return the pre-processed expression.
+     * @param currentCellId The cell ID where the expression is defined.
+     * @return the pre-processed expression with cell IDs replaced by their values.
      * @throws IllegalArgumentException if a circular reference is detected.
      */
-    private String preprocessExpression(String expression) {
+    private String preprocessExpression(String expression, String currentCellId) {
         for (String cellId : this.cells.keySet()) {
             if (expression.contains(cellId)) {
-                if (this.currentEvaluation.contains(cellId)) {
+                if (dependencies.getOrDefault(cellId, new HashSet<>()).contains(currentCellId)) {
                     logger.error("Circular reference detected in expression: {}", expression);
                     throw new IllegalArgumentException("Circular reference detected");
                 }

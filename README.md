@@ -53,17 +53,6 @@ You will need to have all required dependencies and classpath properly configure
 - Formula evaluation catches and gracefully handles arithmetic exceptions.
 
 ### Limitations:
-- **Circular reference detection:** The current implementation only checks for direct circular references, not indirect ones.
-   This might be a potential problem if a cell's formula refers to another cell which in turn refers back to the original cell.
-   Example:
-   ```
-   Cell A1 has a formula that references cell B1: A1 = B1 + 1.
-   Cell B1 also has a formula that references cell A1: B1 = A1 * 2.
-   ```
-- **Dependency handling:** While the `updateDependencies` method updates dependencies every time a new formula is added to a
-  cell, it doesn't handle removing or updating dependencies when a formula is removed or updated. If the formula for
-  a cell is deleted or replaced with a non-formula value, the cell's dependencies are not updated accordingly, which may cause 
-  issues with the `detectCircularDependency` method.
 - **Thread safety:** If this class is intended to be used in a multi-threaded environment, there could be concurrency issues. 
   Synchronization mechanisms (like using the `synchronized` keyword or a `ReentrantLock`) could be used to prevent potential race conditions.
    Example:
@@ -76,7 +65,6 @@ You will need to have all required dependencies and classpath properly configure
    ```
 
 ## Future Enhancements
-
 1. **Support for More Cell Reference Formats:**
    Currently, the code only works with cell references like "A1", "B2", etc. Future enhancements could expand this to support
    ranges of cells, like "A1:A3", or even entire columns or rows, like "A:A" or "1:1".

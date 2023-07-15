@@ -241,4 +241,11 @@ public class SpreadsheetTest {
         assertEquals(40.0, spreadsheet.getCellValue("A2"));
     }
 
+    @Test
+    public void testCellReferenceUpdate() {
+        spreadsheet.setCellValue("A1", 10);
+        spreadsheet.setCellValue("A2", "=A1");
+        spreadsheet.setCellValue("A1", 20);
+        assertEquals(20.0, spreadsheet.getCellValue("A2"));
+    }
 }
