@@ -36,7 +36,8 @@ can update the `logback.xml` file and placed in the `src/main/resources` directo
 2. Import the `Spreadsheet` class into your Java project.
 3. Create a new instance of the class to use the spreadsheet functionality in your project.
 
-## Running the Application with Maven
+## Usage Instructions
+- Docker is available for running tests: `docker-compose up`.
 - Ensure that Maven is installed on your system.
 - Open a command prompt or terminal and navigate to the root directory of the project.
 - Run the command `mvn clean package` to build the project.
@@ -44,8 +45,6 @@ can update the `logback.xml` file and placed in the `src/main/resources` directo
    - From the project's root directory, execute the following command: `mvn exec:java -Dexec.mainClass=com.orkes.spreadsheet.Main`
 
 You will need to have all required dependencies and classpath properly configured to run the application.
-
-- Docker is available for running tests: `docker-compose up`. Ensure the required dependencies and classpath are properly configured when running the application directly.
 
 ## Some Edge Cases
 ### The spreadsheet class attempts to handle some edge cases such as:
