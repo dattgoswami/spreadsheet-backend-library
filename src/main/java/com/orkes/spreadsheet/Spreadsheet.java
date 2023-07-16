@@ -312,7 +312,7 @@ public class Spreadsheet {
         Cell cell = future.pop();
         history.push(cell);
         cells.put(cell.getId(), cell.getValue());
-        if (cell.getValue() instanceof String && ((String) cell.getValue()).startsWith("=")) {
+        if (isFormula(cell.getValue())) {
             formulas.put(cell.getId(), (String) cell.getValue());
         }
     }
