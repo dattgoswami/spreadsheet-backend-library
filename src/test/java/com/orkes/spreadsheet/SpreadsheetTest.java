@@ -1,13 +1,11 @@
 package com.orkes.spreadsheet;
 
-//import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
-
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-//import static org.junit.Assert.assertTrue;
+
 
 public class SpreadsheetTest {
     private Spreadsheet spreadsheet;

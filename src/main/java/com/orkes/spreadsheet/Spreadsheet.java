@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.Deque;
 import java.util.ArrayDeque;
+import java.util.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -113,6 +114,7 @@ public class Spreadsheet {
         return dependencies;
     }
 
+
     /**
      * Detects circular dependencies for a given cell.
      * A circular dependency is detected when a cell depends on itself, either directly or indirectly.
@@ -120,8 +122,8 @@ public class Spreadsheet {
      * @return true if a circular dependency is detected, false otherwise.
      */
     private boolean detectCircularDependency(String cellId) {
-        HashSet<String> visited = new HashSet<>();
-        LinkedList<String> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
         visited.add(cellId);
         queue.add(cellId);
         while (!queue.isEmpty()) {
@@ -192,7 +194,6 @@ public class Spreadsheet {
 
     /**
      * Evaluates a given mathematical expression.
-     * The expression is first added to the current evaluations, then removed once the evaluation is done.
      * @param expression the expression to evaluate.
      * @param currentCellId The cell ID where the expression is defined.
      * @return the result of the evaluation.
@@ -291,8 +292,8 @@ public class Spreadsheet {
         formulas.remove(previousCell.getId());
         if (previousCell.value != null) {
             cells.put(previousCell.getId(), previousCell.getValue());
-            if (previousCell.getValue() instanceof String && ((String) previousCell.getValue()).startsWith("=")) {
-                updateDependencies(previousCell.getId(), (String) previousCell.value);
+            if (isFormula(previousCell.getValue())) {
+                updateDependencies(previousCell.getId(), (String) previousCell.getValue());
                 formulas.put(previousCell.getId(), (String) previousCell.getValue());
             }
         }
