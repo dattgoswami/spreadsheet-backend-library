@@ -290,7 +290,7 @@ public class Spreadsheet {
         future.push(new Cell(previousCell.getId(), cells.get(previousCell.getId())));
         cells.remove(previousCell.getId());
         formulas.remove(previousCell.getId());
-        if (previousCell.value != null) {
+        if (previousCell.getValue() != null) {
             cells.put(previousCell.getId(), previousCell.getValue());
             if (isFormula(previousCell.getValue())) {
                 updateDependencies(previousCell.getId(), (String) previousCell.getValue());
