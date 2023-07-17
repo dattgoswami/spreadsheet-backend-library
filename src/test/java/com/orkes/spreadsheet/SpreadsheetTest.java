@@ -246,4 +246,23 @@ public class SpreadsheetTest {
         spreadsheet.setCellValue("A1", 20);
         assertEquals(20.0, spreadsheet.getCellValue("A2"));
     }
+
+    @Test
+    public void testComplexFormulas() {
+        spreadsheet.setCellValue("A1", 5);
+        spreadsheet.setCellValue("A2", 3);
+        spreadsheet.setCellValue("A3", "=A1 + (A2 * 2)");
+        assertEquals(11.0, spreadsheet.getCellValue("A3"));
+    }
+
+    @Test
+    public void testErrorHandling() {
+        spreadsheet.setCellValue("A1", 10);
+        spreadsheet.setCellValue("A2", 0);
+        spreadsheet.setCellValue("A3", "=A1 / A2");
+        assertThrows(IllegalArgumentException.class, () -> {
+            spreadsheet.getCellValue("A3");
+        });
+    }
+
 }

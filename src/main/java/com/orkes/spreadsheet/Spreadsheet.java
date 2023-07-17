@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Deque;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -46,7 +47,7 @@ public class Spreadsheet {
      */
     public void setCellValue(String cellId, Object value) {
         validateCellId(cellId);
-        if (value instanceof String && ((String) value).startsWith("=")) {
+        if (isFormula(value)) {
             updateDependencies(cellId, (String) value);
             formulas.put(cellId, (String) value);
         } else if (formulas.containsKey(cellId)) {
@@ -55,7 +56,7 @@ public class Spreadsheet {
         }
         future.clear();
         history.push(new Cell(cellId, cells.getOrDefault(cellId, null)));
-        this.cells.put(cellId, value);
+        cells.put(cellId, value);
     }
 
     /**
@@ -85,12 +86,7 @@ public class Spreadsheet {
      */
     private void updateDependencies(String cellId, String formula) {
         Set<String> newDependencies = extractDependenciesFromFormula(formula);
-        if (dependencies.containsKey(cellId)) {
-            dependencies.get(cellId).clear();
-            dependencies.get(cellId).addAll(newDependencies);
-        } else {
-            dependencies.put(cellId, newDependencies);
-        }
+        dependencies.put(cellId, newDependencies);
         if (detectCircularDependency(cellId)) {
             logger.error("Circular reference detected in cell {}", cellId);
             throw new IllegalArgumentException("Circular reference detected");
@@ -128,17 +124,15 @@ public class Spreadsheet {
         queue.add(cellId);
         while (!queue.isEmpty()) {
             String currentCell = queue.poll();
-            Set<String> dependents = dependencies.get(currentCell);
-            if (dependents != null) {
-                if (dependents.contains(cellId)) {
-                    logger.warn("Circular dependency detected for cellId: {}", cellId);
-                    return true;
-                }
-                for (String dependent : dependents) {
-                    if (!visited.contains(dependent)) {
-                        visited.add(dependent);
-                        queue.add(dependent);
-                    }
+            Set<String> dependents = dependencies.getOrDefault(currentCell, Collections.emptySet());
+            if (dependents.contains(cellId)) {
+                logger.warn("Circular dependency detected for cellId: {}", cellId);
+                return true;
+            }
+            for (String dependent : dependents) {
+                if (!visited.contains(dependent)) {
+                    visited.add(dependent);
+                    queue.add(dependent);
                 }
             }
         }
@@ -162,11 +156,11 @@ public class Spreadsheet {
      * @throws IllegalArgumentException if the cell does not exist or the formula is invalid
      */
     public Object getCellValue(String cellId) {
-        if (!this.cells.containsKey(cellId)) {
+        if (!cells.containsKey(cellId)) {
             logger.error("Cell {} does not exist", cellId);
             throw new IllegalArgumentException("Cell does not exist");
         }
-        Object value = this.cells.get(cellId);
+        Object value = cells.get(cellId);
         if (isFormula(value)) {
             if (formulas.get(cellId) == null) {
                 logger.error("Formula does not exist for cell {}", cellId);
@@ -237,7 +231,7 @@ public class Spreadsheet {
      * @throws IllegalArgumentException if a circular reference is detected.
      */
     private String preprocessExpression(String expression, String currentCellId) {
-        for (String cellId : this.cells.keySet()) {
+        for (String cellId : cells.keySet()) {
             if (expression.contains(cellId)) {
                 if (dependencies.getOrDefault(cellId, new HashSet<>()).contains(currentCellId)) {
                     logger.error("Circular reference detected in expression: {}", expression);
@@ -249,6 +243,7 @@ public class Spreadsheet {
         }
         return expression;
     }
+
 
     /**
      * Validates the syntax of a mathematical expression.
@@ -286,7 +281,7 @@ public class Spreadsheet {
         if (history.isEmpty()) {
             return;
         }
-        Cell previousCell = history.peek();
+        Cell previousCell = history.pop();
         future.push(new Cell(previousCell.getId(), cells.get(previousCell.getId())));
         cells.remove(previousCell.getId());
         formulas.remove(previousCell.getId());
@@ -297,7 +292,6 @@ public class Spreadsheet {
                 formulas.put(previousCell.getId(), (String) previousCell.getValue());
             }
         }
-        history.pop();
     }
 
     /**
@@ -306,7 +300,6 @@ public class Spreadsheet {
      */
     public void redo() {
         if (future.isEmpty()) {
-            logger.warn("Nothing to redo");
             return;
         }
         Cell cell = future.pop();
